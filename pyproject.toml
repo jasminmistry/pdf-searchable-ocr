@@ -50,10 +50,10 @@ gpu = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/pdf-searchable-ocr"
-Repository = "https://github.com/yourusername/pdf-searchable-ocr.git"
-Documentation = "https://github.com/yourusername/pdf-searchable-ocr#readme"
-"Bug Tracker" = "https://github.com/yourusername/pdf-searchable-ocr/issues"
+Homepage = "https://github.com/jasminmistry/pdf-searchable-ocr"
+Repository = "https://github.com/jasminmistry/pdf-searchable-ocr.git"
+Documentation = "https://github.com/jasminmistry/pdf-searchable-ocr#readme"
+"Bug Tracker" = "https://github.com/jasminmistry/pdf-searchable-ocr/issues"
 
 [project.scripts]
 pdf-searchable-ocr = "py_ocr.cli:main"
