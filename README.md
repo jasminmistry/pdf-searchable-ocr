@@ -53,6 +53,28 @@ print(f"Searchable PDF created: {pdf_path}")
 print(f"Image with bounding boxes: {boxed_image}")
 ```
 
+### CLI Usage
+
+The package also provides a command-line tool:
+
+```bash
+# Basic usage - creates searchable PDF only
+pdf-searchable-ocr input.jpg
+
+# Specify custom output PDF name
+pdf-searchable-ocr input.jpg --output-pdf my_document.pdf
+
+# Enable bounding box visualization
+pdf-searchable-ocr input.jpg --bounding-boxes
+
+# Full options with custom names
+pdf-searchable-ocr invoice.jpg \
+    --output-pdf invoice_searchable.pdf \
+    --output-prefix invoice_processed \
+    --bounding-boxes \
+    --lang en
+```
+
 ### Complete Workflow
 
 ```python
@@ -61,13 +83,21 @@ from py_ocr import OCRProcessor
 # Initialize processor
 ocr = OCRProcessor(lang='en', use_gpu=False, verbose=True)
 
-# Process image and generate all outputs
-results = ocr.process_and_generate_all('invoice.jpg', output_prefix='invoice_processed')
+# Process image with custom PDF name and bounding boxes enabled
+results = ocr.process_and_generate_all(
+    'invoice.jpg', 
+    output_pdf='invoice_searchable.pdf',
+    output_prefix='invoice_processed',
+    bounding_boxes=True
+)
 
 if results['searchable_pdf']:
     print(f"✅ Searchable PDF: {results['searchable_pdf']}")
 if results['boxed_image']:
     print(f"✅ Visualization: {results['boxed_image']}")
+
+# Or use defaults (no bounding boxes)
+results = ocr.process_and_generate_all('document.jpg')
 ```
 
 ### Using Sample Images
@@ -81,8 +111,13 @@ ocr = OCRProcessor()
 # Download a sample image for testing
 image_path = ocr.download_sample_image()
 
-# Process the sample image
-results = ocr.process_and_generate_all(image_path)
+# Process with custom settings
+results = ocr.process_and_generate_all(
+    image_path,
+    output_pdf='sample_searchable.pdf',
+    output_prefix='sample',
+    bounding_boxes=True  # Enable visualization
+)
 ```
 
 ## API Reference
@@ -136,13 +171,15 @@ Draw bounding boxes on the image to visualize OCR detection.
 - `str`: Path to the image with bounding boxes
 - `None`: If creation failed
 
-#### `process_and_generate_all(image_path: str, output_prefix: str) -> dict`
+#### `process_and_generate_all(image_path: str, output_pdf: str, output_prefix: str, bounding_boxes: bool) -> dict`
 
-Complete workflow: OCR + Searchable PDF + Bounding Box Image.
+Complete workflow: OCR + Searchable PDF + Optional Bounding Box Image.
 
 **Parameters:**
 - `image_path` (str): Path to the input image
+- `output_pdf` (str): Output PDF filename (default: "searchable_output.pdf")
 - `output_prefix` (str): Prefix for output files (default: "output")
+- `bounding_boxes` (bool): Whether to generate bounding box visualization (default: False)
 
 **Returns:**
 - `dict`: Dictionary containing paths to all generated files
@@ -165,6 +202,32 @@ pdf-searchable-ocr supports 80+ languages through PaddleOCR. Some popular ones i
 For the complete list, see [PaddleOCR documentation](https://github.com/PaddlePaddle/PaddleOCR/blob/release/2.7/doc/doc_en/multi_languages_en.md).
 
 ## Advanced Configuration
+
+### Output Control
+
+```python
+# Control output files and features
+ocr = OCRProcessor(lang='en')
+
+# Minimal processing - only searchable PDF
+results = ocr.process_and_generate_all(
+    'document.jpg',
+    output_pdf='my_document.pdf',
+    bounding_boxes=False  # Skip visualization
+)
+
+# Full processing with custom names
+results = ocr.process_and_generate_all(
+    'invoice.jpg',
+    output_pdf='invoice_searchable.pdf',
+    output_prefix='invoice_analysis',
+    bounding_boxes=True  # Include visualization
+)
+
+# Generated files:
+# - invoice_searchable.pdf (searchable PDF)
+# - invoice_analysis_with_boxes.jpg (visualization)
+```
 
 ### GPU Acceleration
 
@@ -199,7 +262,15 @@ image_folder = 'path/to/images'
 for filename in os.listdir(image_folder):
     if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.tiff')):
         image_path = os.path.join(image_folder, filename)
-        results = ocr.process_and_generate_all(image_path, f"output_{filename}")
+        base_name = os.path.splitext(filename)[0]
+        
+        # Process with custom output names
+        results = ocr.process_and_generate_all(
+            image_path, 
+            output_pdf=f"searchable_{base_name}.pdf",
+            output_prefix=f"processed_{base_name}",
+            bounding_boxes=True  # Generate visualizations
+        )
         print(f"Processed: {filename}")
 ```
 
@@ -212,14 +283,18 @@ for filename in os.listdir(image_folder):
 📁 Using existing sample image: sample_image.jpg
 🔍 Processing image: sample_image.jpg
 📊 Text blocks detected: 48 | Average confidence: 0.984
-✅ Searchable PDF saved as: output_searchable.pdf
+✅ Searchable PDF saved as: my_document.pdf
 🎨 Drawing 48 bounding boxes on image...
 ✅ Image with bounding boxes saved as: output_with_boxes.jpg
 ```
 
 ### Generated Files
-- `output_searchable.pdf` - Searchable PDF with invisible text layers
+When using `bounding_boxes=True`:
+- `my_document.pdf` - Searchable PDF with invisible text layers
 - `output_with_boxes.jpg` - Original image with colored bounding boxes
+
+When using `bounding_boxes=False` (default):
+- `my_document.pdf` - Searchable PDF only (faster processing)
 
 ## Requirements
 
@@ -304,98 +379,3 @@ If you encounter any issues or have questions:
 - [ ] Additional output formats (Excel, Word)
 - [ ] OCR result caching
 - [ ] Performance optimizations
-
-## Features
-
-- Text detection and recognition using PaddleOCR
-- Support for multiple languages (English by default)
-- Automatic sample image download for testing
-- Confidence scoring for OCR results
-- Clean output formatting
-
-## Prerequisites
-
-- Python 3.12 or higher
-- uv package manager
-
-## Installation
-
-1. Clone or navigate to the project directory:
-```bash
-cd py-ocr
-```
-
-2. Install dependencies using uv:
-```bash
-uv sync
-```
-
-## Usage
-
-### Basic Demo
-Run the main OCR demonstration:
-```bash
-uv run python main.py
-```
-This downloads a sample image and demonstrates OCR capabilities.
-
-### Quick OCR for Any Image
-Process your own images:
-```bash
-uv run python quick_ocr.py path/to/your/image.jpg
-uv run python quick_ocr.py document.png en
-```
-
-### Command-line OCR Tool
-For more detailed results:
-```bash
-uv run python ocr_custom.py image.jpg
-uv run python ocr_custom.py image.jpg en output.txt
-```
-
-### Batch Processing
-Process multiple images at once:
-```bash
-uv run python batch_ocr.py ./images_folder
-uv run python batch_ocr.py ./images ./results
-```
-
-## Project Structure
-
-```
-pdf-searchable-ocr/
-├── main.py           # Main OCR demonstration with sample image
-├── quick_ocr.py      # Simple script to OCR any image file
-├── ocr_custom.py     # Command-line OCR tool for single images
-├── batch_ocr.py      # Batch processing script for multiple images
-├── pyproject.toml    # Project configuration and dependencies
-├── README.md         # This file
-├── sample_image.jpg  # Downloaded sample image (created on first run)
-└── .venv/           # Virtual environment (created by uv)
-```
-
-## Dependencies
-
-- `paddlepaddle`: Deep learning framework
-- `paddleocr`: OCR toolkit based on PaddlePaddle
-- `pillow`: Python Imaging Library
-
-## Customization
-
-You can modify the `main.py` file to:
-- Use different languages (change `lang='en'` parameter)
-- Process your own images (replace the image path)
-- Adjust OCR parameters for better accuracy
-- Add image preprocessing steps
-
-## Supported Languages
-
-PaddleOCR supports many languages. Some common ones:
-- `en`: English
-- `ch`: Chinese
-- `fr`: French
-- `de`: German
-- `ko`: Korean
-- `ja`: Japanese
-
-For a full list, check the [PaddleOCR documentation](https://github.com/PaddlePaddle/PaddleOCR).

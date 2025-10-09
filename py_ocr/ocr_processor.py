@@ -349,7 +349,8 @@ class OCRProcessor:
     
     def process_and_generate_all(self, 
                                image_path: str, 
-                               output_prefix: str = "output") -> Dict[str, Optional[str]]:
+                               output_pdf: str = "searchable_output.pdf",
+                               output_prefix: str = "output", bounding_boxes: bool = False) -> Dict[str, Optional[str]]:
         """
         Complete workflow: OCR + Searchable PDF + Bounding Box Image.
         
@@ -374,11 +375,12 @@ class OCRProcessor:
         results['ocr_result'] = ocr_result
         
         # Step 2: Create searchable PDF
-        pdf_path = f"{output_prefix}_searchable.pdf"
+        pdf_path = output_pdf
         results['searchable_pdf'] = self.create_searchable_pdf(image_path, ocr_result, pdf_path)
         
         # Step 3: Create image with bounding boxes
-        boxed_image_path = f"{output_prefix}_with_boxes.jpg"
-        results['boxed_image'] = self.draw_bounding_boxes(image_path, ocr_result, boxed_image_path)
-        
+        if bounding_boxes:
+            boxed_image_path = f"{output_prefix}_with_boxes.jpg"
+            results['boxed_image'] = self.draw_bounding_boxes(image_path, ocr_result, boxed_image_path)
+
         return results
